@@ -222,9 +222,9 @@ function renderPoem(id){
  document.getElementById('app').innerHTML=`<div class="page-shell"><div class="breadcrumbs"><button onclick="location.hash='#works'">作品選讀</button><span>/</span><button onclick="location.hash='#poet/${a.id}'">${esc(a.name)}</button><span>/</span>${esc(p.title)}</div><section class="poem-top"><div><div class="poem-heading"><div class="profile-period">${esc(a.period)} · ${esc(sceneNames[p.scene])}</div><h1>〈${esc(p.title)}〉</h1><div class="poem-author">${esc(a.name)}　·　${esc(a.date)}</div><p class="poem-note">${esc(sceneText[p.scene]||'一闋詞，一段心境。')}。原文與白話譯文逐段對照，隨畫面與朗讀慢慢品味。</p><div class="reader-controls"><button class="control-button primary" id="readButton">▷　朗讀原文</button><button class="control-button" id="stopButton" disabled>■　停止</button><label class="voice-select-label" for="voiceSelect">聲音</label><select id="voiceSelect" aria-label="選擇中文朗讀聲音"></select></div><div class="voice-note" id="voiceNote">使用裝置內建中文語音 · 點擊朗讀後可同時欣賞動畫</div></div><div class="poem-paper"><div class="poem-seal"><span>原文</span><span>白話譯讀</span></div>${stanzas}</div></section><section class="animation-section"><div class="animation-head"><div><h2>詞境卡通動畫</h2><p>人物、景物隨詞意動作 · 朗讀時譯文同步提示</p></div><button class="stage-play" id="animationToggle">▷　播放動畫＋朗讀</button></div><div class="animation-stage"><canvas id="sceneCanvas" aria-label="${esc(p.title)}人物與景物卡通動畫畫面"></canvas><button class="video-play-overlay" id="videoPlayButton" aria-label="播放動畫並朗讀詞作"><span>▶</span><small>播放動畫</small></button><div class="stage-label">ANIMATED POEM · ${esc(sceneNames[p.scene]).toUpperCase()}</div><div class="stage-caption"><strong>${esc(p.title)}</strong><span>${esc(sceneText[p.scene])}</span><small id="captionTranslation">${esc(p.stanzas[0][1])}</small></div></div><div class="stage-bottom"><span>按播放後，人物與景物開始動作並朗讀詞文</span><span>${String(poems.indexOf(p)+1).padStart(2,'0')} / ${poems.length}</span></div></section><div class="next-works">${links}</div>${source}<button class="back-link" onclick="location.hash='#poet/${a.id}'">←　返回${esc(a.name)}詞人頁</button></div>`;
  setupVoice(p);setupAnimation(p);
 }
-let animationFrame=null,animationResize=null,startSceneAnimation=()=>{};
+let animationFrame=null,animationResize=null,startSceneAnimation=()=>{},pauseSceneAnimation=()=>{};
 function route(){
- if(animationFrame){cancelAnimationFrame(animationFrame);animationFrame=null;}if(animationResize){animationResize.disconnect();animationResize=null;}startSceneAnimation=()=>{};if(window.speechSynthesis)speechSynthesis.cancel();
+ if(animationFrame){cancelAnimationFrame(animationFrame);animationFrame=null;}if(animationResize){animationResize.disconnect();animationResize=null;}startSceneAnimation=()=>{};pauseSceneAnimation=()=>{};if(window.speechSynthesis)speechSynthesis.cancel();
  const raw=decodeURIComponent(location.hash.slice(1)||'home');const [page,id]=raw.split('/');
  if(page==='poet'&&id)renderAuthor(id);else if(page==='poem'&&id)renderPoem(id);else if(page==='works')renderWorks();else renderHome();
  window.scrollTo({top:0,behavior:'smooth'});
@@ -369,8 +369,8 @@ function setupVoice(p){
  loadVoices();speechSynthesis.onvoiceschanged=loadVoices;
  note.textContent='朗讀使用裝置內建語音合成（非預錄人聲）；可依裝置選擇中文音色。';
  let current=0;
- read.addEventListener('click',()=>{startSceneAnimation();speechSynthesis.cancel();current=0;read.disabled=true;stop.disabled=false;function speakNext(){if(current>=p.stanzas.length){read.disabled=false;stop.disabled=true;return;}document.getElementById('captionTranslation').textContent=p.stanzas[current][1];const utterance=new SpeechSynthesisUtterance(p.stanzas[current][0]);utterance.lang=voices[Number(select.value)]?.lang||'zh-TW';utterance.rate=.86;utterance.pitch=1;const chosen=voices[Number(select.value)];if(chosen)utterance.voice=chosen;utterance.onend=()=>{current++;setTimeout(speakNext,420)};utterance.onerror=()=>{read.disabled=false;stop.disabled=true;note.textContent='語音播放遇到問題；請確認裝置已安裝中文語音。';};speechSynthesis.speak(utterance);}speakNext();});
- stop.addEventListener('click',()=>{speechSynthesis.cancel();read.disabled=false;stop.disabled=true;});
+ read.addEventListener('click',()=>{startSceneAnimation();speechSynthesis.cancel();current=0;read.disabled=true;stop.disabled=false;function speakNext(){if(current>=p.stanzas.length){read.disabled=false;stop.disabled=true;pauseSceneAnimation();return;}document.getElementById('captionTranslation').textContent=p.stanzas[current][1];const utterance=new SpeechSynthesisUtterance(p.stanzas[current][0]);utterance.lang=voices[Number(select.value)]?.lang||'zh-TW';utterance.rate=.86;utterance.pitch=1;const chosen=voices[Number(select.value)];if(chosen)utterance.voice=chosen;utterance.onend=()=>{current++;setTimeout(speakNext,420)};utterance.onerror=()=>{read.disabled=false;stop.disabled=true;note.textContent='語音播放遇到問題；請確認裝置已安裝中文語音。';pauseSceneAnimation();};speechSynthesis.speak(utterance);}speakNext();});
+ stop.addEventListener('click',()=>{speechSynthesis.cancel();pauseSceneAnimation();read.disabled=false;stop.disabled=true;});
 }
 function setupAnimation(p){
  const canvas=document.getElementById('sceneCanvas'),ctx=canvas.getContext('2d'),stage=document.querySelector('.animation-stage'),toggle=document.getElementById('animationToggle'),overlay=document.getElementById('videoPlayButton');
@@ -416,7 +416,7 @@ function setupAnimation(p){
  const play=()=>{if(playing)return;playing=true;start=performance.now();syncPlayer();startLoop();};
  const pause=()=>{if(!playing)return;playing=false;if(animationFrame)cancelAnimationFrame(animationFrame);animationFrame=null;draw(performance.now());syncPlayer();};
  const togglePlayer=()=>{if(playing){pause();document.getElementById('stopButton')?.click();}else{play();document.getElementById('readButton')?.click();}};
- startSceneAnimation=play;syncPlayer();draw(performance.now());
+ startSceneAnimation=play;pauseSceneAnimation=pause;syncPlayer();draw(performance.now());
  toggle.addEventListener('click',togglePlayer);overlay.addEventListener('click',togglePlayer);
 }
 // A restrained synthesized ambient drone, started only after the visitor opts in.
