@@ -219,17 +219,148 @@ function renderPoem(id){
  const stanzas=p.stanzas.map((s,i)=>`<div class="stanza"><p class="original">${esc(s[0])}</p><p class="translation">${esc(s[1])}</p></div>`).join('');
  const source=p.source?`<div class="work-source">補充文本來源：<a href="${esc(p.source)}" target="_blank" rel="noopener">${p.source.includes('wikisource')?'維基文庫':'古文島／古詩文網'} ↗</a> · 白話譯文為本頁整理</div>`:'';
  const links=poems.filter(x=>x.author===a.id).map(x=>`<button class="next-work ${x===p?'active':''}" onclick="location.hash='#poem/${poemId(x)}'">${esc(x.title)}</button>`).join('');
- document.getElementById('app').innerHTML=`<div class="page-shell"><div class="breadcrumbs"><button onclick="location.hash='#works'">作品選讀</button><span>/</span><button onclick="location.hash='#poet/${a.id}'">${esc(a.name)}</button><span>/</span>${esc(p.title)}</div><section class="poem-top"><div><div class="poem-heading"><div class="profile-period">${esc(a.period)} · ${esc(sceneNames[p.scene])}</div><h1>〈${esc(p.title)}〉</h1><div class="poem-author">${esc(a.name)}　·　${esc(a.date)}</div><p class="poem-note">${esc(sceneText[p.scene]||'一闋詞，一段心境。')}。原文與白話譯文逐段對照，隨畫面與朗讀慢慢品味。</p><div class="reader-controls"><button class="control-button primary" id="readButton">▷　朗讀原文</button><button class="control-button" id="stopButton" disabled>■　停止</button><label class="voice-select-label" for="voiceSelect">聲音</label><select id="voiceSelect" aria-label="選擇中文朗讀聲音"></select></div><div class="voice-note" id="voiceNote">使用裝置內建中文語音 · 點擊朗讀後可同時欣賞動畫</div></div><div class="poem-paper"><div class="poem-seal"><span>原文</span><span>白話譯讀</span></div>${stanzas}</div></section><section class="animation-section"><div class="animation-head"><div><h2>詞境動畫</h2><p>畫面依詞意流轉 · 譯文隨段落提示</p></div><button class="stage-play" id="animationToggle">Ⅱ　暫停畫面</button></div><div class="animation-stage"><canvas id="sceneCanvas" aria-label="${esc(p.title)}意境動畫畫面"></canvas><div class="stage-label">POETIC LANDSCAPE · ${esc(sceneNames[p.scene]).toUpperCase()}</div><div class="stage-caption"><strong>${esc(p.title)}</strong><span>${esc(sceneText[p.scene])}</span><small id="captionTranslation">${esc(p.stanzas[0][1])}</small></div></div><div class="stage-bottom"><span>以動態水墨意象呈現詞中景物</span><span>${String(poems.indexOf(p)+1).padStart(2,'0')} / ${poems.length}</span></div></section><div class="next-works">${links}</div>${source}<button class="back-link" onclick="location.hash='#poet/${a.id}'">←　返回${esc(a.name)}詞人頁</button></div>`;
+ document.getElementById('app').innerHTML=`<div class="page-shell"><div class="breadcrumbs"><button onclick="location.hash='#works'">作品選讀</button><span>/</span><button onclick="location.hash='#poet/${a.id}'">${esc(a.name)}</button><span>/</span>${esc(p.title)}</div><section class="poem-top"><div><div class="poem-heading"><div class="profile-period">${esc(a.period)} · ${esc(sceneNames[p.scene])}</div><h1>〈${esc(p.title)}〉</h1><div class="poem-author">${esc(a.name)}　·　${esc(a.date)}</div><p class="poem-note">${esc(sceneText[p.scene]||'一闋詞，一段心境。')}。原文與白話譯文逐段對照，隨畫面與朗讀慢慢品味。</p><div class="reader-controls"><button class="control-button primary" id="readButton">▷　朗讀原文</button><button class="control-button" id="stopButton" disabled>■　停止</button><label class="voice-select-label" for="voiceSelect">聲音</label><select id="voiceSelect" aria-label="選擇中文朗讀聲音"></select></div><div class="voice-note" id="voiceNote">使用裝置內建中文語音 · 點擊朗讀後可同時欣賞動畫</div></div><div class="poem-paper"><div class="poem-seal"><span>原文</span><span>白話譯讀</span></div>${stanzas}</div></section><section class="animation-section"><div class="animation-head"><div><h2>詞境卡通動畫</h2><p>人物、景物隨詞意動作 · 朗讀時譯文同步提示</p></div><button class="stage-play" id="animationToggle">▷　播放動畫＋朗讀</button></div><div class="animation-stage"><canvas id="sceneCanvas" aria-label="${esc(p.title)}人物與景物卡通動畫畫面"></canvas><button class="video-play-overlay" id="videoPlayButton" aria-label="播放動畫並朗讀詞作"><span>▶</span><small>播放動畫</small></button><div class="stage-label">ANIMATED POEM · ${esc(sceneNames[p.scene]).toUpperCase()}</div><div class="stage-caption"><strong>${esc(p.title)}</strong><span>${esc(sceneText[p.scene])}</span><small id="captionTranslation">${esc(p.stanzas[0][1])}</small></div></div><div class="stage-bottom"><span>按播放後，人物與景物開始動作並朗讀詞文</span><span>${String(poems.indexOf(p)+1).padStart(2,'0')} / ${poems.length}</span></div></section><div class="next-works">${links}</div>${source}<button class="back-link" onclick="location.hash='#poet/${a.id}'">←　返回${esc(a.name)}詞人頁</button></div>`;
  setupVoice(p);setupAnimation(p);
 }
-let animationFrame=null,animationResize=null;
+let animationFrame=null,animationResize=null,startSceneAnimation=()=>{};
 function route(){
- if(animationFrame){cancelAnimationFrame(animationFrame);animationFrame=null;}if(animationResize){animationResize.disconnect();animationResize=null;}if(window.speechSynthesis)speechSynthesis.cancel();
+ if(animationFrame){cancelAnimationFrame(animationFrame);animationFrame=null;}if(animationResize){animationResize.disconnect();animationResize=null;}startSceneAnimation=()=>{};if(window.speechSynthesis)speechSynthesis.cancel();
  const raw=decodeURIComponent(location.hash.slice(1)||'home');const [page,id]=raw.split('/');
  if(page==='poet'&&id)renderAuthor(id);else if(page==='poem'&&id)renderPoem(id);else if(page==='works')renderWorks();else renderHome();
  window.scrollTo({top:0,behavior:'smooth'});
 }
 window.addEventListener('hashchange',route);route();
+function drawCartoonPerson(ctx,x,ground,size,t,options={}){
+ const robe=options.robe||'#718276',trim=options.trim||'#d2b582',hair=options.hair||'#262925',skin='#edc59a',female=options.female||false,pose=options.pose||'look',phase=options.phase||0;
+ const walk=pose==='walk'||pose==='run',step=walk?Math.sin(t*(pose==='run'?8:4.2)+phase)*8:Math.sin(t*1.6+phase)*1.5;
+ ctx.save();ctx.translate(x+Math.sin(t*.45+phase)*(walk?8:1),ground+Math.sin(t*2.1+phase)*1.5);ctx.scale(size, size);
+ ctx.fillStyle='rgba(14,20,22,.23)';ctx.beginPath();ctx.ellipse(0,2,18,4,0,0,Math.PI*2);ctx.fill();
+ ctx.lineCap='round';ctx.lineJoin='round';
+ // tiny stepping feet and trousers
+ ctx.strokeStyle='#332f2b';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(-6,-13);ctx.lineTo(-7-step,-2);ctx.moveTo(6,-13);ctx.lineTo(7+step,-2);ctx.stroke();
+ ctx.strokeStyle=options.armor?'#54453b':robe;ctx.lineWidth=8;ctx.beginPath();ctx.moveTo(-7-step,-2);ctx.lineTo(-12-step,-1);ctx.moveTo(7+step,-2);ctx.lineTo(12+step,-1);ctx.stroke();
+ // flowing hanfu robe
+ ctx.fillStyle=robe;ctx.strokeStyle='rgba(33,39,34,.55)';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(-12,-72);ctx.quadraticCurveTo(-17,-51,-20,-34);ctx.quadraticCurveTo(-25,-17,-18,0);ctx.quadraticCurveTo(0,5,18,0);ctx.quadraticCurveTo(25,-18,20,-35);ctx.quadraticCurveTo(16,-55,12,-72);ctx.closePath();ctx.fill();ctx.stroke();
+ ctx.strokeStyle=trim;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-11,-38);ctx.lineTo(0,-4);ctx.lineTo(12,-38);ctx.stroke();ctx.beginPath();ctx.moveTo(-14,-30);ctx.quadraticCurveTo(0,-25,14,-30);ctx.stroke();
+ // sleeves, animated as the character walks or gestures
+ const armSwing=walk?step*.62:Math.sin(t*1.8+phase)*4;
+ ctx.fillStyle=robe;ctx.strokeStyle='rgba(33,39,34,.55)';ctx.lineWidth=1.4;
+ ctx.beginPath();ctx.moveTo(-10,-69);ctx.quadraticCurveTo(-25,-63,-31,-50+armSwing);ctx.quadraticCurveTo(-24,-43,-13,-51);ctx.lineTo(-4,-61);ctx.closePath();ctx.fill();ctx.stroke();
+ ctx.beginPath();ctx.moveTo(10,-69);ctx.quadraticCurveTo(25,-63,31,-49-armSwing);ctx.quadraticCurveTo(24,-42,13,-51);ctx.lineTo(4,-61);ctx.closePath();ctx.fill();ctx.stroke();
+ // raised hand for looking, greeting, or lamenting poses
+ ctx.strokeStyle=skin;ctx.lineWidth=5;ctx.beginPath();
+ if(pose==='reach'){ctx.moveTo(24,-49);ctx.quadraticCurveTo(36,-63,40,-75+Math.sin(t*2+phase)*2);}
+ else if(pose==='wave'||pose==='salute'){ctx.moveTo(24,-49);ctx.quadraticCurveTo(34,-62,30,-78+Math.sin(t*2+phase)*2);}
+ else if(pose==='drink'){ctx.moveTo(24,-49);ctx.quadraticCurveTo(32,-54,22,-65);}
+ else if(pose==='look'){ctx.moveTo(24,-49);ctx.quadraticCurveTo(33,-58,27,-68);}
+ else{ctx.moveTo(24,-49);ctx.quadraticCurveTo(31,-45,25,-38+armSwing);}
+ ctx.stroke();ctx.fillStyle=skin;ctx.beginPath();ctx.arc(pose==='reach'?40:pose==='wave'||pose==='salute'?30:pose==='drink'?22:pose==='look'?27:25,pose==='reach'?-75:pose==='wave'||pose==='salute'?-78:pose==='drink'?-65:pose==='look'?-68:-38+armSwing,4,0,Math.PI*2);ctx.fill();
+ // collar and belt
+ ctx.fillStyle=trim;ctx.beginPath();ctx.moveTo(-8,-72);ctx.lineTo(0,-59);ctx.lineTo(8,-72);ctx.lineTo(3,-50);ctx.lineTo(-2,-50);ctx.closePath();ctx.fill();
+ if(options.armor){ctx.fillStyle='rgba(79,68,55,.82)';ctx.fillRect(-12,-54,24,18);ctx.strokeStyle='#c1a36e';ctx.lineWidth=1;for(let yy=-51;yy<-38;yy+=5){ctx.beginPath();ctx.moveTo(-11,yy);ctx.lineTo(11,yy);ctx.stroke();}}
+ // head, hair, and a readable little cartoon face
+ ctx.fillStyle=skin;ctx.strokeStyle='rgba(85,57,39,.7)';ctx.lineWidth=1.4;ctx.beginPath();ctx.ellipse(0,-86,13,16,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+ ctx.fillStyle=hair;ctx.beginPath();ctx.ellipse(0,-96,14,7,-.08,Math.PI,Math.PI*2);ctx.fill();if(female){ctx.beginPath();ctx.arc(12,-98,5,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.moveTo(10,-95);ctx.quadraticCurveTo(19,-84,14,-73);ctx.quadraticCurveTo(10,-83,8,-88);ctx.fill();}else{ctx.fillRect(-14,-98,28,5);ctx.fillRect(-7,-104,14,6);}
+ ctx.fillStyle='#342f2b';ctx.beginPath();ctx.arc(-4,-87,1.3,0,Math.PI*2);ctx.arc(4,-87,1.3,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#9b5949';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(-2,-80);ctx.quadraticCurveTo(0,-78,3,-80);ctx.stroke();
+ if(options.helmet){ctx.fillStyle=options.helmet;ctx.beginPath();ctx.moveTo(-14,-91);ctx.quadraticCurveTo(-17,-108,0,-109);ctx.quadraticCurveTo(17,-108,14,-91);ctx.closePath();ctx.fill();ctx.fillRect(-19,-93,38,4);ctx.strokeStyle='#c9a260';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(0,-109);ctx.lineTo(0,-118-Math.sin(t*3+phase)*2);ctx.stroke();}
+ if(options.fan){ctx.strokeStyle='#eee1bd';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(27,-54);ctx.lineTo(39,-73);ctx.moveTo(30,-54);ctx.lineTo(43,-68);ctx.moveTo(33,-54);ctx.lineTo(46,-72);ctx.stroke();}
+ ctx.restore();
+}
+function drawCartoonHorse(ctx,x,y,s,t){
+ ctx.save();ctx.translate(x,y+Math.sin(t*5)*2);ctx.scale(s,s);const leg=Math.sin(t*7)*5;
+ ctx.fillStyle='#6d493a';ctx.beginPath();ctx.ellipse(0,-22,34,17,-.08,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.moveTo(18,-30);ctx.quadraticCurveTo(31,-49,40,-52);ctx.lineTo(46,-44);ctx.lineTo(35,-27);ctx.closePath();ctx.fill();
+ ctx.fillStyle='#44342e';ctx.beginPath();ctx.ellipse(47,-46,11,7,-.2,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.moveTo(40,-53);ctx.lineTo(39,-63);ctx.lineTo(45,-56);ctx.moveTo(48,-53);ctx.lineTo(53,-61);ctx.lineTo(54,-52);ctx.fill();
+ ctx.strokeStyle='#3f332d';ctx.lineWidth=5;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(-22,-12);ctx.lineTo(-23+leg,5);ctx.moveTo(-7,-12);ctx.lineTo(-8-leg,5);ctx.moveTo(13,-12);ctx.lineTo(14-leg,5);ctx.moveTo(27,-12);ctx.lineTo(28+leg,5);ctx.stroke();
+ ctx.strokeStyle='#322c29';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(-31,-26);ctx.quadraticCurveTo(-49,-18,-45+Math.sin(t*4)*5,-5);ctx.stroke();ctx.fillStyle='#f0c77b';ctx.fillRect(18,-34,17,3);ctx.restore();
+}
+function drawTinyBoat(ctx,x,y,s,t,color='#292f30'){
+ ctx.save();ctx.translate(x,y+Math.sin(t*1.6)*3);ctx.scale(s,s);ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(-48,-4);ctx.quadraticCurveTo(0,13,50,-4);ctx.lineTo(37,7);ctx.lineTo(-35,7);ctx.closePath();ctx.fill();ctx.strokeStyle='rgba(244,225,183,.6)';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(0,-4);ctx.lineTo(0,-62);ctx.moveTo(3,-57);ctx.quadraticCurveTo(30,-45,30,-18);ctx.lineTo(3,-18);ctx.closePath();ctx.stroke();ctx.fillStyle='rgba(231,210,171,.54)';ctx.beginPath();ctx.moveTo(3,-56);ctx.quadraticCurveTo(30,-45,30,-19);ctx.lineTo(3,-19);ctx.closePath();ctx.fill();ctx.restore();
+}
+function drawCartoonStory(ctx,p,t,W,H){
+ const scene=p.scene,a=authorFor(p.author),ground=H*.865,s=H*.0042,robe=a?.color||'#718276',dark=a?.hair||'#282a27',woman=(x,y,size,pose='look',extra={})=>drawCartoonPerson(ctx,x,y,size,t,{robe:'#bd8176',trim:'#e6c493',hair:'#302b2b',female:true,pose,...extra}),scholar=(x,y,size,pose='look',extra={})=>drawCartoonPerson(ctx,x,y,size,t,{robe,trim:'#d3b77f',hair:dark,pose,...extra});
+ const window=(x,y,w,h)=>{ctx.fillStyle='rgba(31,36,34,.57)';ctx.fillRect(x,y,w,h);ctx.strokeStyle='rgba(213,190,149,.5)';ctx.lineWidth=3;ctx.strokeRect(x+7,y+7,w-14,h-14);for(let i=1;i<4;i++){ctx.beginPath();ctx.moveTo(x+8+w*i/4,y+7);ctx.lineTo(x+8+w*i/4,y+h-7);ctx.stroke()}ctx.beginPath();ctx.moveTo(x+7,y+h*.52);ctx.lineTo(x+w-7,y+h*.52);ctx.stroke()};
+ const bench=(x,y,w)=>{ctx.fillStyle='rgba(63,48,38,.78)';ctx.fillRect(x,y,w,7);ctx.fillRect(x+8,y+7,5,18);ctx.fillRect(x+w-13,y+7,5,18)};
+ if(['boudoir','intimate','garden'].includes(scene)){
+  window(W*.16,H*.22,W*.24,H*.44);ctx.fillStyle='rgba(145,105,76,.55)';ctx.fillRect(W*.49,H*.55,W*.16,H*.02);ctx.fillRect(W*.51,H*.57,W*.012,H*.1);ctx.fillRect(W*.62,H*.57,W*.012,H*.1);
+  // mirror and a small lamp
+  ctx.strokeStyle='#c6a76e';ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(W*.56,H*.48,H*.038,H*.08,-.1,0,Math.PI*2);ctx.stroke();ctx.fillStyle='#f4c77a';ctx.beginPath();ctx.arc(W*.49,H*.48,4+Math.sin(t*5)*1.5,0,Math.PI*2);ctx.fill();
+  woman(W*.72,ground,s,scene==='garden'?'reach':'look');
+  if(scene==='garden'){scholar(W*.35,ground*.99,s*.78,'walk',{robe:'#637565'});ctx.strokeStyle='rgba(44,58,43,.6)';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(W*.76,H*.54);ctx.lineTo(W*.88,H*.75);ctx.stroke();ctx.strokeStyle='#94785f';ctx.beginPath();ctx.moveTo(W*.72,H*.6);ctx.quadraticCurveTo(W*.78,H*.54+Math.sin(t*1.5)*8,W*.84,H*.6);ctx.stroke();}
+  return;
+ }
+ if(scene==='rain'){
+  window(W*.58,H*.18,W*.25,H*.4);
+  if(p.author==='su'){
+   // walking scholar under rain, holding a bamboo staff and straw hat
+   scholar(W*.42,ground,s,'walk',{robe:'#987e58',trim:'#d3bd8d'});ctx.strokeStyle='#796144';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(W*.45,H*.57);ctx.lineTo(W*.49,H*.89);ctx.stroke();ctx.fillStyle='#c4a06e';ctx.beginPath();ctx.ellipse(W*.42,H*.49,W*.075,H*.018,-.07,0,Math.PI*2);ctx.fill();
+  }else if(p.author==='wen')woman(W*.7,ground,s,'look');else scholar(W*.7,ground,s,'drink');
+  return;
+ }
+ if(scene==='farewell'||scene==='willow'){
+  const pierY=ground;ctx.fillStyle='rgba(73,59,43,.55)';ctx.fillRect(0,pierY,W*.47,H*.035);for(let i=0;i<5;i++)ctx.fillRect(W*(.04+i*.09),pierY,H*.014,H*.11);
+  if(scene==='willow'){woman(W*.24,ground,s*.86,'reach');drawTinyBoat(ctx,W*(.64+Math.sin(t*.2)*.08),H*.82,.62,t);scholar(W*(.64+Math.sin(t*.2)*.08),H*.81,s*.52,'look',{robe:'#89907c'});}
+  else{scholar(W*.27,ground,s*.9,'reach');woman(W*.44,ground,s*.82,'look');const bx=W*(.73+Math.sin(t*.19)*.07);drawTinyBoat(ctx,bx,H*.82,.7,t);scholar(bx,H*.81,s*.48,'wave',{robe:'#7d8a78'});}
+  return;
+ }
+ if(scene==='border'||scene==='battle'){
+  drawCartoonHorse(ctx,W*.32,ground*.97,H*.00145,t);
+  drawCartoonPerson(ctx,W*.34,ground*.99,s*.82,t,{robe:'#71614a',trim:'#d5ae70',hair:'#242522',armor:true,helmet:'#54453b',pose:'salute'});
+  drawCartoonPerson(ctx,W*(.57+Math.sin(t*.25)*.025),ground,s,t,{robe:'#76634e',trim:'#d7b06e',hair:'#272723',armor:true,helmet:'#4e4439',pose:'wave'});
+  for(let i=0;i<4;i++)drawCartoonPerson(ctx,W*(.73+i*.055),ground*.99,H*.0024,t,{robe:'#6b5946',trim:'#b79a6c',hair:'#242522',armor:true,helmet:'#50453a',pose:'walk',phase:i});
+  return;
+ }
+ if(scene==='river'){
+  if(p.author==='su'){
+   // cliff-side poet watches the Yangtze and an old warship
+   ctx.fillStyle='rgba(45,40,35,.75)';ctx.beginPath();ctx.moveTo(0,H*.73);ctx.quadraticCurveTo(W*.12,H*.54,W*.3,H*.64);ctx.lineTo(W*.38,H);ctx.lineTo(0,H);ctx.closePath();ctx.fill();
+   scholar(W*.2,ground,s,'look',{robe:'#d0ae78',fan:true});drawTinyBoat(ctx,W*(.69+Math.sin(t*.22)*.08),H*.79,.8,t,'rgba(28,35,38,.85)');
+  }else{
+   for(let i=0;i<3;i++){const bx=W*(.24+i*.25)+Math.sin(t*.25+i)*12;drawTinyBoat(ctx,bx,H*(.77+i*.035),.53,t,'rgba(30,43,42,.8)');}
+   woman(W*.72,ground,s*.86,'wave',{robe:'#c38b65'});scholar(W*.36,ground,s*.72,'look',{robe:'#728273'});
+  }
+  return;
+ }
+ if(scene==='moon'){
+  ctx.strokeStyle='rgba(214,190,148,.5)';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(0,H*.78);ctx.lineTo(W,H*.78);ctx.moveTo(0,H*.87);ctx.lineTo(W,H*.87);ctx.stroke();
+  scholar(W*.48,ground,s,'drink',{fan:true});ctx.fillStyle='#d6ba83';ctx.beginPath();ctx.arc(W*.55,H*.66,5,0,Math.PI*2);ctx.fill();return;
+ }
+ if(scene==='night'){
+  scholar(W*.67,ground,s,'look',{robe:'#586c6a'});
+  if(p.title==='江城子')woman(W*.36,ground,s*.86,'look',{robe:'rgba(209,177,158,.72)',trim:'rgba(243,219,183,.75)'});
+  else{ctx.strokeStyle='rgba(25,27,29,.85)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(W*.3,H*.48);ctx.quadraticCurveTo(W*.36,H*.43,W*.4,H*.48);ctx.quadraticCurveTo(W*.45,H*.39,W*.51,H*.47);ctx.stroke();ctx.fillStyle='rgba(239,221,184,.85)';ctx.beginPath();ctx.ellipse(W*(.38+Math.sin(t*.4)*.03),H*(.46-Math.sin(t*.5)*.1),7,4,-.2,0,Math.PI*2);ctx.fill();}
+  return;
+ }
+ if(scene==='stars'){
+  // two animated lovers meet above an arched bridge
+  ctx.strokeStyle='rgba(237,206,149,.75)';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(W*.22,H*.78);ctx.quadraticCurveTo(W*.5,H*.47,W*.78,H*.78);ctx.stroke();
+  woman(W*.28,ground,s*.82,'reach',{robe:'#7180a0'});scholar(W*.73,ground,s*.82,'reach',{robe:'#9e665e'});return;
+ }
+ if(scene==='lanterns'){
+  for(let i=0;i<4;i++){const x=((t*15+i*W*.29)%(W+100))-30;drawCartoonPerson(ctx,x,ground,s*.62,t,{robe:i%2?'#a95f4f':'#9d7652',trim:'#e9c47d',hair:'#272522',female:i%2===0,pose:'walk',phase:i});}
+  scholar(W*.38,ground,s*.9,'look',{robe:'#61766a'});return;
+ }
+ if(scene==='lotus'){
+  const bx=W*(.55+Math.sin(t*.18)*.035),by=H*.81;drawTinyBoat(ctx,bx,by,.86,t,'rgba(35,49,43,.88)');scholar(bx,by-2,s*.58,'look',{robe:'#788a6f',fan:true});return;
+ }
+ if(scene==='mist'){
+  ctx.strokeStyle='rgba(43,56,53,.48)';ctx.lineWidth=7;ctx.beginPath();ctx.moveTo(W*.5,H*.64);ctx.lineTo(W*.5,H*.82);ctx.moveTo(W*.33,H*.7);ctx.lineTo(W*.67,H*.7);ctx.stroke();scholar(W*(.55+Math.sin(t*.24)*.07),ground,s,'walk',{robe:'#687a78'});return;
+ }
+ if(scene==='mountain'){
+  ctx.fillStyle='rgba(57,66,47,.8)';ctx.beginPath();ctx.ellipse(W*.58,H*.83,W*.23,H*.16,0,Math.PI,Math.PI*2);ctx.fill();scholar(W*.48,ground,s*.84,'drink',{robe:'#8b7959',fan:true});return;
+ }
+ if(scene==='separation'){
+  scholar(W*.68,ground,s,'look',{robe:'#728477'});woman(W*.28,ground,s*.78,'reach',{robe:'#b98472'});return;
+ }
+ // Spring, autumn, and falling-petal poems: let the speaker walk through a lived-in garden.
+ if(scene==='spring'||scene==='autumn'||scene==='petals'){
+  if(scene==='spring'){ctx.strokeStyle='rgba(57,73,57,.5)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(W*.76,H*.54);ctx.quadraticCurveTo(W*.81,H*.5+Math.sin(t*1.5)*12,W*.88,H*.56);ctx.stroke();}
+  const who=p.author==='liqz'||(p.author==='su'&&p.title==='水龍吟・次韻章質夫楊花詞');
+  if(who)woman(W*.6,ground,s,'reach');else scholar(W*.42,ground,s,'walk',{robe:'#8d795e'});
+  return;
+ }
+ // Remaining courtyard scenes still include an animated human presence.
+ woman(W*.65,ground,s,'look');
+}
 function setupVoice(p){
  const read=document.getElementById('readButton'),stop=document.getElementById('stopButton'),select=document.getElementById('voiceSelect'),note=document.getElementById('voiceNote');
  if(!('speechSynthesis' in window)||!('SpeechSynthesisUtterance' in window)){read.disabled=true;select.disabled=true;note.textContent='此瀏覽器未提供語音朗讀功能。';return;}
@@ -238,12 +369,12 @@ function setupVoice(p){
  loadVoices();speechSynthesis.onvoiceschanged=loadVoices;
  note.textContent='朗讀使用裝置內建語音合成（非預錄人聲）；可依裝置選擇中文音色。';
  let current=0;
- read.addEventListener('click',()=>{speechSynthesis.cancel();current=0;read.disabled=true;stop.disabled=false;function speakNext(){if(current>=p.stanzas.length){read.disabled=false;stop.disabled=true;return;}document.getElementById('captionTranslation').textContent=p.stanzas[current][1];const utterance=new SpeechSynthesisUtterance(p.stanzas[current][0]);utterance.lang=voices[Number(select.value)]?.lang||'zh-TW';utterance.rate=.86;utterance.pitch=1;const chosen=voices[Number(select.value)];if(chosen)utterance.voice=chosen;utterance.onend=()=>{current++;setTimeout(speakNext,420)};utterance.onerror=()=>{read.disabled=false;stop.disabled=true;note.textContent='語音播放遇到問題；請確認裝置已安裝中文語音。';};speechSynthesis.speak(utterance);}speakNext();});
+ read.addEventListener('click',()=>{startSceneAnimation();speechSynthesis.cancel();current=0;read.disabled=true;stop.disabled=false;function speakNext(){if(current>=p.stanzas.length){read.disabled=false;stop.disabled=true;return;}document.getElementById('captionTranslation').textContent=p.stanzas[current][1];const utterance=new SpeechSynthesisUtterance(p.stanzas[current][0]);utterance.lang=voices[Number(select.value)]?.lang||'zh-TW';utterance.rate=.86;utterance.pitch=1;const chosen=voices[Number(select.value)];if(chosen)utterance.voice=chosen;utterance.onend=()=>{current++;setTimeout(speakNext,420)};utterance.onerror=()=>{read.disabled=false;stop.disabled=true;note.textContent='語音播放遇到問題；請確認裝置已安裝中文語音。';};speechSynthesis.speak(utterance);}speakNext();});
  stop.addEventListener('click',()=>{speechSynthesis.cancel();read.disabled=false;stop.disabled=true;});
 }
 function setupAnimation(p){
- const canvas=document.getElementById('sceneCanvas'),ctx=canvas.getContext('2d'),stage=document.querySelector('.animation-stage'),toggle=document.getElementById('animationToggle');
- if(!ctx)return;let width=stage.clientWidth,height=stage.clientHeight,lastWidth=0,lastHeight=0,playing=!matchMedia('(prefers-reduced-motion: reduce)').matches,start=performance.now();
+ const canvas=document.getElementById('sceneCanvas'),ctx=canvas.getContext('2d'),stage=document.querySelector('.animation-stage'),toggle=document.getElementById('animationToggle'),overlay=document.getElementById('videoPlayButton');
+ if(!ctx)return;let width=stage.clientWidth,height=stage.clientHeight,lastWidth=0,lastHeight=0,playing=false,start=performance.now();
  const resize=()=>{const rect=stage.getBoundingClientRect(),dpr=Math.min(window.devicePixelRatio||1,2);width=rect.width;height=rect.height;if(width===lastWidth&&height===lastHeight)return;lastWidth=width;lastHeight=height;canvas.width=Math.max(1,Math.round(width*dpr));canvas.height=Math.max(1,Math.round(height*dpr));ctx.setTransform(dpr,0,0,dpr,0,0);};
  resize();if('ResizeObserver' in window){animationResize=new ResizeObserver(()=>{resize();if(!playing)draw(performance.now())});animationResize.observe(stage);}else window.addEventListener('resize',resize,{passive:true});
  const seed=(n)=>{let x=Math.sin(n*78.233+poems.indexOf(p)*19.17)*43758.5453;return x-Math.floor(x)};
@@ -274,12 +405,19 @@ function setupAnimation(p){
   if(['petals','spring','autumn','willow'].includes(scene)){for(let i=0;i<35;i++){let x=(seed(i+800)*W+t*(scene==='autumn'?-9:10)+seed(i+810)*80)%W,y=(seed(i+820)*H+t*(9+seed(i+830)*18))%H,rot=t*(.45+seed(i+840)) + i;ctx.save();ctx.translate(x,y);ctx.rotate(rot);ctx.fillStyle=scene==='autumn'?'rgba(204,139,77,.64)':scene==='willow'?'rgba(169,187,128,.52)':'rgba(231,177,165,.72)';ctx.beginPath();ctx.ellipse(0,0,3.2,6,0,0,Math.PI*2);ctx.fill();ctx.restore();}}
   if(scene==='mist'){ctx.fillStyle='rgba(232,232,215,.11)';for(let i=0;i<4;i++){let x=((t*(8+i*2)+i*W*.31)%(W+220))-110;ctx.beginPath();ctx.ellipse(x,H*(.56+i*.045),W*.21,12+i*3,0,0,Math.PI*2);ctx.fill();}}
   if(scene==='mountain'){for(let i=0;i<8;i++){const x=W*(.05+i*.13),y=H*(.64+seed(i+901)*.1);ctx.fillStyle='rgba(20,38,36,.65)';ctx.beginPath();ctx.moveTo(x-17,y+30);ctx.lineTo(x,y-22-seed(i)*20);ctx.lineTo(x+17,y+30);ctx.closePath();ctx.fill();}}
+  // Character-led scenes turn the moving scenery into short cartoon narratives.
+  drawCartoonStory(ctx,p,t,W,H);
   // subtle frame vignette and edge texture
   const vg=ctx.createRadialGradient(W*.5,H*.48,Math.min(W,H)*.15,W*.5,H*.48,Math.max(W,H)*.75);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(8,13,16,.38)');ctx.fillStyle=vg;ctx.fillRect(0,0,W,H);
   if(playing)animationFrame=requestAnimationFrame(draw);
  };
- const startLoop=()=>{if(animationFrame)cancelAnimationFrame(animationFrame);animationFrame=requestAnimationFrame(draw)};toggle.textContent=playing?"Ⅱ　暫停畫面":"▷　播放畫面";if(playing)startLoop();else draw(performance.now());
- toggle.addEventListener('click',()=>{playing=!playing;if(playing){start=performance.now();toggle.textContent='Ⅱ　暫停畫面';startLoop();}else{if(animationFrame)cancelAnimationFrame(animationFrame);animationFrame=null;draw(performance.now());toggle.textContent='▷　播放畫面';}});
+ const startLoop=()=>{if(animationFrame)cancelAnimationFrame(animationFrame);animationFrame=requestAnimationFrame(draw)};
+ const syncPlayer=()=>{toggle.textContent=playing?'Ⅱ　暫停動畫':'▷　播放動畫＋朗讀';overlay.hidden=playing;};
+ const play=()=>{if(playing)return;playing=true;start=performance.now();syncPlayer();startLoop();};
+ const pause=()=>{if(!playing)return;playing=false;if(animationFrame)cancelAnimationFrame(animationFrame);animationFrame=null;draw(performance.now());syncPlayer();};
+ const togglePlayer=()=>{if(playing){pause();document.getElementById('stopButton')?.click();}else{play();document.getElementById('readButton')?.click();}};
+ startSceneAnimation=play;syncPlayer();draw(performance.now());
+ toggle.addEventListener('click',togglePlayer);overlay.addEventListener('click',togglePlayer);
 }
 // A restrained synthesized ambient drone, started only after the visitor opts in.
 let audioContext=null,ambientNodes=[];
