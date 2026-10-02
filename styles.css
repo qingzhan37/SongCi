@@ -20,3 +20,57 @@
 .animation-audio-toggle{border:1px solid rgba(68,83,69,.24);background:transparent;color:#57675a;padding:7px 10px;font:11px var(--sans);cursor:pointer;white-space:nowrap}.animation-audio-toggle[aria-pressed="false"]{color:#8b8577}.animation-audio-toggle:hover{border-color:#a4513e;color:#a4513e}.stage-bottom #animationStatus{flex:1}.stage-bottom>span:last-child{white-space:nowrap}
 @media(max-width:720px){.home-page .brand{font-size:17px}.home-page .top-nav a{font-size:12px}.home-page .hero{padding-bottom:58px}.home-page .hero h1{font-size:clamp(43px,11vw,56px)}.home-page .hero p{font-size:16px;line-height:1.9;max-width:88%}.home-page .hero-aside{font-size:12px}.home-page .hero-aside strong{font-size:30px}.home-page .section-head h2{font-size:23px}.home-page .section-head p{font-size:13px;line-height:1.6}.home-page .search-box{width:145px}.home-page .search-box input{font-size:13px}.home-page .author-grid{gap:11px}.home-page .author-card{grid-template-columns:59px 1fr;gap:10px;padding:13px 10px;min-height:157px}.home-page .portrait{width:59px;height:81px}.home-page .author-period{font-size:10px}.home-page .author-name{font-size:19px}.home-page .author-date{font-size:12px}.home-page .author-style{font-size:12px;line-height:1.55;margin-top:7px}.home-page .quote-strip blockquote{font-size:18px;line-height:1.7}.home-page .quote-strip cite{font-size:11px}.home-page .site-footer{font-size:10px}.video-subtitles{max-height:65%;padding:43px 13px 12px;gap:3px}.video-subtitles span:first-child{font-size:15px}.video-subtitles span:last-child{font-size:12px}.stage-bottom{align-items:flex-start;gap:7px;flex-wrap:wrap}.stage-bottom #animationStatus{flex-basis:100%;order:3}.animation-audio-toggle{font-size:10px;padding:6px 8px}}
 .video-subtitles .caption-window{width:100%;flex:0 0 auto;overflow:hidden;white-space:nowrap;text-align:center}.video-subtitles .caption-window span{display:inline-block;width:max-content;min-width:100%;white-space:nowrap;text-align:left;line-height:1.8}.video-subtitles .caption-window .caption-scroll{animation:caption-travel var(--caption-duration) linear .35s forwards}.video-subtitles .translation-window span{font-size:clamp(12px,1.55vw,16px);color:#efc9a8}.video-subtitles .caption-window #captionOriginal{font-size:clamp(15px,2vw,21px);color:#fff5df}.video-subtitles .caption-window #captionTranslation{font-size:clamp(12px,1.55vw,16px);color:#efc9a8}@keyframes caption-travel{from{transform:translateX(0)}to{transform:translateX(var(--caption-shift))}}
+/* Larger type on poet profiles and poem reading pages. */
+.page-shell .breadcrumbs{font-size:14px}
+.page-shell .profile-period{font-size:13px}
+.page-shell .profile-title h1{font-size:46px}
+.page-shell .profile-title span{font-size:15px}
+.page-shell .profile-tagline{font-size:20px}
+.page-shell .profile-bio{font-size:17px;line-height:2}
+.page-shell .fact-label{font-size:14px}
+.page-shell .fact-text{font-size:16px;line-height:2}
+.page-shell .works-head h2{font-size:26px}
+.page-shell .works-head span{font-size:14px}
+.page-shell .work-title{font-size:20px}
+.page-shell .work-theme{font-size:14px}
+.page-shell .work-source{font-size:14px}
+.page-shell .back-link{font-size:14px}
+.page-shell .poem-heading .profile-period{font-size:13px}
+.page-shell .poem-heading h1{font-size:44px}
+.page-shell .poem-author{font-size:17px}
+.page-shell .poem-note{font-size:16px;line-height:2}
+.page-shell .control-button{font-size:14px}
+.page-shell .voice-select-label,.page-shell .reader-controls select,.page-shell .voice-note{font-size:13px}
+.page-shell .poem-seal{font-size:13px}
+.page-shell .original{font-size:22px}
+.page-shell .translation{font-size:16px}
+.page-shell .animation-head h2{font-size:25px}
+.page-shell .stage-play,.page-shell .animation-audio-toggle{font-size:14px}
+.page-shell .stage-label,.page-shell .stage-bottom{font-size:13px}
+.page-shell .video-subtitles .caption-window #captionOriginal{font-size:clamp(18px,2.3vw,25px)}
+.page-shell .video-subtitles .caption-window #captionTranslation{font-size:clamp(14px,1.8vw,19px)}
+@media(max-width:720px){
+ .page-shell .breadcrumbs{font-size:12px}
+ .page-shell .profile-title h1{font-size:34px}
+ .page-shell .profile-title span{font-size:13px}
+ .page-shell .profile-tagline{font-size:16px}
+ .page-shell .profile-bio{font-size:14px}
+ .page-shell .fact-label{font-size:13px}
+ .page-shell .fact-text{font-size:15px}
+ .page-shell .works-head h2{font-size:22px}
+ .page-shell .works-head span{font-size:12px}
+ .page-shell .work-title{font-size:18px}
+ .page-shell .work-theme{font-size:13px}
+ .page-shell .poem-heading h1{font-size:33px}
+ .page-shell .poem-author{font-size:15px}
+ .page-shell .poem-note{font-size:14px}
+ .page-shell .control-button{font-size:12px}
+ .page-shell .voice-select-label,.page-shell .reader-controls select,.page-shell .voice-note{font-size:12px}
+ .page-shell .original{font-size:20px}
+ .page-shell .translation{font-size:14px}
+ .page-shell .animation-head h2{font-size:20px}
+ .page-shell .stage-play,.page-shell .animation-audio-toggle{font-size:12px}
+ .page-shell .stage-label,.page-shell .stage-bottom{font-size:11px}
+ .page-shell .video-subtitles .caption-window #captionOriginal{font-size:17px}
+ .page-shell .video-subtitles .caption-window #captionTranslation{font-size:13px}
+}
